@@ -5,3 +5,4 @@
 [submodule "aria2lib"]
 	path = aria2lib
 	url = https://github.com/MUedsa/aria2lib.git
+	branch = master

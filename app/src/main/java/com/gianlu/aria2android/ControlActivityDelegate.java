@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import com.gianlu.aria2lib.Aria2PK;
 import com.gianlu.aria2lib.Aria2Ui;
 import com.gianlu.aria2lib.BadEnvironmentException;
 import com.gianlu.aria2lib.internal.Message;
@@ -25,9 +27,11 @@ import com.gianlu.commonutils.analytics.AnalyticsApplication;
 import com.gianlu.commonutils.dialogs.DialogUtils;
 import com.gianlu.commonutils.permissions.AskPermission;
 import com.gianlu.commonutils.preferences.Prefs;
+import com.gianlu.commonutils.preferences.json.JsonStoring;
 import com.gianlu.commonutils.ui.Toaster;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,6 +47,7 @@ public class ControlActivityDelegate implements Aria2Ui.Listener {
     private final UpdateToggle updateToggle;
     private final Aria2ConfigurationScreen screen;
     private final Aria2Ui aria2;
+    private final Handler handler;
 
     ControlActivityDelegate(@NonNull FragmentActivity context, @NonNull UpdateToggle updateToggle, @NonNull Aria2ConfigurationScreen screen) throws BadEnvironmentException {
         this.context = context;
@@ -50,6 +55,7 @@ public class ControlActivityDelegate implements Aria2Ui.Listener {
         this.screen = screen;
         this.aria2 = new Aria2Ui(context, this);
         this.aria2.loadEnv(context);
+        handler = new Handler(context.getMainLooper());
     }
 
     boolean onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -59,7 +65,7 @@ public class ControlActivityDelegate implements Aria2Ui.Listener {
                 if (uri != null) {
                     screen.setOutputPathValue(FileUtils.getFullPathFromTreeUri(uri, context));
                     context.getContentResolver().takePersistableUriPermission(uri,
-                            data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 }
             }
 
@@ -238,5 +244,22 @@ public class ControlActivityDelegate implements Aria2Ui.Listener {
 
     interface UpdateToggle {
         void setStatus(boolean on);
+    }
+
+    public void updateCustomOptions(String key, String value) {
+        try{
+            JSONObject obj = JsonStoring.intoPrefs().getJsonObject(Aria2PK.CUSTOM_OPTIONS);
+            if(obj == null){
+                obj = new JSONObject();
+            }
+            obj.put(key, value);
+            JsonStoring.intoPrefs().putJsonObject(Aria2PK.CUSTOM_OPTIONS, obj);
+
+            JSONObject finalObj = obj;
+            handler.post(() -> screen.refreshCustomOptionsNumber(finalObj));
+        }
+        catch (JSONException e){
+            Log.w(TAG, "update custom options fail", e);
+        }
     }
 }

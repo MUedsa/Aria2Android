@@ -59,7 +59,7 @@ public class MainActivity extends ActivityWithDialog implements ControlActivityD
         setSupportActionBar(bar);
 
         Aria2ConfigurationScreen screen = findViewById(R.id.main_preferences);
-        screen.setup(new Aria2ConfigurationScreen.OutputPathSelector(this, ControlActivityDelegate.RC_STORAGE_ACCESS_CODE), PK.START_AT_BOOT, PK.START_WITH_APP, true);
+        screen.setup(new Aria2ConfigurationScreen.OutputPathSelector(this, ControlActivityDelegate.RC_STORAGE_ACCESS_CODE), PK.START_AT_BOOT, PK.START_WITH_APP, PK.TRACKERS_UPDATE_URL, true);
 
         toggleServer = findViewById(R.id.main_toggleServer);
         toggleServer.setOnClickListener(view -> {
@@ -101,6 +101,9 @@ public class MainActivity extends ActivityWithDialog implements ControlActivityD
 
         if (Prefs.getBoolean(PK.START_WITH_APP, false))
             delegate.toggleService(true);
+
+        new Thread(new TrackersUpdateTask(result -> delegate.updateCustomOptions("bt-tracker", result)))
+                .start();
     }
 
     @Override

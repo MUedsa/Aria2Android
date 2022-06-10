@@ -9,4 +9,5 @@ public final class PK extends Aria2PK {
     public static final Prefs.KeyWithDefault<Boolean> START_AT_BOOT = new Prefs.KeyWithDefault<>("startAtBoot", false);
     public static final Prefs.KeyWithDefault<Boolean> START_WITH_APP = new Prefs.KeyWithDefault<>("startWithApp", false);
     static final Prefs.Key IS_NEW_BUNDLED_WITH_ARIA2APP = new Prefs.Key("bundledWithAria2App");
+    public static final Prefs.KeyWithDefault<String> TRACKERS_UPDATE_URL = new Prefs.KeyWithDefault<>("trackersUpdateUrl", "https://cdn.staticaly.com/gh/XIU2/TrackersListCollection/master/best_aria2.txt");
 }
