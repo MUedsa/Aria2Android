@@ -33,6 +33,7 @@ public class TrackersUpdateTask implements Runnable {
                 urlConnection.setRequestProperty("User-Agent", UserAgent);
                 String result = convertStreamToString(urlConnection.getInputStream());
                 if(callback != null && !result.isEmpty()){
+                    Log.d(TAG, "TrackersUpdateTask result:" + result);
                     callback.on(result);
                 }
             }
@@ -52,7 +53,7 @@ public class TrackersUpdateTask implements Runnable {
     private String convertStreamToString(InputStream inputStream) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder sb = new StringBuilder();
-        String line = null;
+        String line;
         while ((line = reader.readLine()) != null) {
             sb.append(line).append("\n");
         }

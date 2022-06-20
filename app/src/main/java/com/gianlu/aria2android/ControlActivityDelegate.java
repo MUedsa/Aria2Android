@@ -6,8 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,9 +19,11 @@ import com.gianlu.aria2lib.Aria2PK;
 import com.gianlu.aria2lib.Aria2Ui;
 import com.gianlu.aria2lib.BadEnvironmentException;
 import com.gianlu.aria2lib.internal.Message;
+import com.gianlu.aria2lib.internal.MonitorUpdate;
 import com.gianlu.aria2lib.ui.Aria2ConfigurationScreen;
 import com.gianlu.aria2lib.ui.Aria2ConfigurationScreen.LogEntry;
 import com.gianlu.aria2lib.ui.ImportExportUtils;
+import com.gianlu.commonutils.CommonUtils;
 import com.gianlu.commonutils.FileUtils;
 import com.gianlu.commonutils.analytics.AnalyticsApplication;
 import com.gianlu.commonutils.dialogs.DialogUtils;
@@ -29,6 +31,7 @@ import com.gianlu.commonutils.permissions.AskPermission;
 import com.gianlu.commonutils.preferences.Prefs;
 import com.gianlu.commonutils.preferences.json.JsonStoring;
 import com.gianlu.commonutils.ui.Toaster;
+import com.google.android.material.textview.MaterialTextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,18 +47,18 @@ public class ControlActivityDelegate implements Aria2Ui.Listener {
     static final int RC_IMPORT_CONFIG = 4;
     private static final String TAG = ControlActivityDelegate.class.getSimpleName();
     private final FragmentActivity context;
+    private final MaterialTextView performancePanel;
     private final UpdateToggle updateToggle;
     private final Aria2ConfigurationScreen screen;
     private final Aria2Ui aria2;
-    private final Handler handler;
 
     ControlActivityDelegate(@NonNull FragmentActivity context, @NonNull UpdateToggle updateToggle, @NonNull Aria2ConfigurationScreen screen) throws BadEnvironmentException {
         this.context = context;
+        this.performancePanel = context.findViewById(R.id.performance_panel);
         this.updateToggle = updateToggle;
         this.screen = screen;
         this.aria2 = new Aria2Ui(context, this);
         this.aria2.loadEnv(context);
-        handler = new Handler(context.getMainLooper());
     }
 
     boolean onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -124,6 +127,11 @@ public class ControlActivityDelegate implements Aria2Ui.Listener {
 
         if (screen == null && aria2 != null)
             context.runOnUiThread(aria2::askForStatus);
+
+        if(performancePanel != null) {
+            if(on) performancePanel.setVisibility(View.VISIBLE);
+            else performancePanel.setVisibility(View.GONE);
+        }
     }
 
     private boolean startService() {
@@ -226,7 +234,22 @@ public class ControlActivityDelegate implements Aria2Ui.Listener {
             return;
         }
 
-        if (msg.type == Message.Type.MONITOR_UPDATE) return;
+        if (msg.type == Message.Type.MONITOR_UPDATE) {
+            if(msg.o instanceof MonitorUpdate){
+                MonitorUpdate monitorUpdate = (MonitorUpdate) msg.o;
+                StringBuilder sb = new StringBuilder();
+                sb.append("PID: ")
+                        .append(monitorUpdate.pid())
+                        .append("\n")
+                        .append("CPU: ")
+                        .append(monitorUpdate.cpu())
+                        .append("\n")
+                        .append("Memory: ")
+                        .append(CommonUtils.dimensionFormatter(monitorUpdate.rss(), false));
+                if(performancePanel != null) performancePanel.setText(sb);
+            }
+            return;
+        }
 
         LogEntry entry = createLogEntry(msg);
         if (entry != null) addLog(entry);
@@ -256,7 +279,7 @@ public class ControlActivityDelegate implements Aria2Ui.Listener {
             JsonStoring.intoPrefs().putJsonObject(Aria2PK.CUSTOM_OPTIONS, obj);
 
             JSONObject finalObj = obj;
-            handler.post(() -> screen.refreshCustomOptionsNumber(finalObj));
+            context.runOnUiThread(() -> screen.refreshCustomOptionsNumber(finalObj));
         }
         catch (JSONException e){
             Log.w(TAG, "update custom options fail", e);

@@ -15,7 +15,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 71
-        versionName "2.6.3"
+        versionName "2.6.3-m2"
     }
 
     if (isCi) {
@@ -68,15 +68,15 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lintOptions {
-        warning 'MissingTranslation', 'Instantiatable'
-    }
 
     playConfigs {
         foss {
             commit.set(false)
             enabled.set(false)
         }
+    }
+    lint {
+        warning 'MissingTranslation', 'Instantiatable'
     }
 }
 
