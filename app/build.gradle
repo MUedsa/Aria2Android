@@ -15,7 +15,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 71
-        versionName "2.6.3-m2"
+        versionName "2.6.3-tv2"
     }
 
     if (isCi) {
