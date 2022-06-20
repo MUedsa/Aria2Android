@@ -78,6 +78,12 @@ android {
     lint {
         warning 'MissingTranslation', 'Instantiatable'
     }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 play {
